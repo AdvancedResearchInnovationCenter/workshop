@@ -1,2 +1,4 @@
 *.bag
 *.h5
+DVSGesture/
+*.gif
