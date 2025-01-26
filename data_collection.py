@@ -1,4 +1,4 @@
-from ros_robot_pkg.srv import moveRobot, moveRobotRelative
+from ros_robot_pkg.srv import moveRobot, moveRobotRelative, setValue
 import rospy
 
 from geometry_msgs.msg import Pose
@@ -20,28 +20,34 @@ def get_pose(pos, euler, degrees=False):
 
     return pose
 
+go_to = lambda pos, rot: move_ur(target_pose=get_pose(pos, rot), frame='davis')
+
 print(moveRobot, moveRobotRelative)
 
 rospy.wait_for_service('/move_ur_relative')
 move_ur_r = rospy.ServiceProxy('/move_ur_relative', moveRobotRelative)
 move_ur = rospy.ServiceProxy('/move_ur', moveRobot)
+vel = rospy.ServiceProxy('/change_ref_vel', setValue)
 
-init_pos = [0, -.8, .33]
-init_rot = [0, 3.1415, 0]
+vel(0.3)
 
-final_pos = [0, -.3, .33]
-final_rot = init_rot
+h = .5
+corner1 = [-.1, -.8, h]
+corner2 = [.1, -.8, h]
+corner3 = [.1, -.5, h]
+corner4 = [-.1, -.5, h]
 
-init_pose = get_pose(init_pos, init_rot)
-final_pose = get_pose(final_pos, final_rot)
-print(final_pose)
+mid = [(corner1[0] + corner3[0]) / 2, (corner1[1] + corner3[1]) / 2, (corner1[2] + corner3[2]) / 2]
+rot = [0, 3.1415, 0]
 
-move_ur(target_pose=init_pose, frame='davis')
+go_to(mid, rot)
 
-move_ur(target_pose=final_pose, frame='davis')
+go_to(corner1, rot)
+go_to(corner2, rot)
+go_to(corner3, rot)
+go_to(corner4, rot)
 
-move_ur(target_pose=init_pose, frame='davis')
-
+go_to(mid, rot)
 
 
 

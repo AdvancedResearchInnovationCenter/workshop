@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 
 # Path to rosbag
-bag = rosbag.Bag('workshop.bag')
+bag = rosbag.Bag('w.bag')
 
 events = []
 
@@ -16,7 +16,7 @@ for topic, msg, t in bag.read_messages(topics=['/dvs/events']):
 events_array = np.array(events)
 
 # Save directory of h5 data sequence
-h5f = h5py.File('workshop.h5', 'w')
+h5f = h5py.File('workshop1.h5', 'w')
 h5f.create_dataset('events_data', data=events_array)
 h5f.close()
 
