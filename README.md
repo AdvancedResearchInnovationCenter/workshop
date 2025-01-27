@@ -1,5 +1,5 @@
 # ARIC Neuromorphic workshop
-
+Slides found on sharepoint https://kuacae.sharepoint.com/:f:/s/IntelligentRoboticManufacturing/EhhggcLJJK1BhDGhZAAR8lIB4ZKO50gHpBKAYa8qvod22Q?e=741ZVE 
 ## Software
 
 Prerequsites
