@@ -1,11 +1,14 @@
+#%%
 import h5py
 import numpy as np
 import tonic
 
 h5 = h5py.File('/home/aric/neuromorphic_workshop/workshop.h5', 'r')
-h5['events_data'][:, -1]
 
-def arr_to_tonic(arr):
+events = h5['events_data'][:]
+print(events.shape)
+
+def arr_to_tonic(arr): #we will cover tonic later. For now just know that it is a format for storing events that is more memory efficient.
     out = np.zeros(len(arr), dtype=[('x', '<i2'), ('y', '<i2'), ('p', '?'), ('t', '<f8')])
     arr[:, 3] = arr[:, 3] * 1e6
     arr[:, 3] = arr[:, 3] - arr[0, 3]
@@ -16,78 +19,60 @@ def arr_to_tonic(arr):
     out['t'] = arr[:, 3].astype(np.float64)
     return out
 
-events = arr_to_tonic(h5['events_data'][:])
-    
-print(events)
+events = arr_to_tonic(events)
 
-time_window = 50000
-fps = 1e6 / time_window
-
-print(fps, time_window)
-
-transform = tonic.transforms.ToFrame(
-    sensor_size=(346, 260, 2),
-    time_window=time_window,
-)
-
-# events['p'] = [True]*len(events['p'])
-
-frames = transform(events)
-
-print(frames.shape)
-
-# ani = tonic.utils.plot_animation(frames=frames[:, 1, :, :], fps=fps)
-
-# ani.save("figs/animation.gif", writer='imagemagick', fps=fps)
-
-#plot in 3d frames 0 and 1 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+ts0 = events[0]['t']
+ts1 = events[-1]['t']
 
-slicer = tonic.slicers.SliceByTime(time_window=time_window)
-sliced, _ = slicer.slice(events, 0)
-sample = sliced[110]
+print("Time span: ", (ts1 - ts0) / 1e6, "seconds")
 
+#30 ms windows
+breaks = np.arange(ts0, ts1, 30e3)
+print("Number of 30 ms windows: ", len(breaks) - 1)
+
+breaks_idx = np.searchsorted(events['t'], breaks)
+counts = np.diff(breaks_idx)
+
+
+sample = events[breaks_idx[120]:breaks_idx[121]]
+#3D plot
 fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-
-posi = sample[sample['p']]
-nega = sample[~sample['p']]
-
-# ax.scatter(posi['t'], posi['x'], posi['y'], c='r', marker='o', s=1, label='Positive', alpha=0.5)
-# ax.scatter(nega['t'], nega['x'], nega['y'], c='b', marker='o', s=1, label='Negative', alpha=0.5)
-
-# #no ticks
-# ax.set_xticks([])
-# ax.set_yticks([])
-# ax.set_zticks([])
-
-# ax.set_xlabel('Time')
-# ax.set_ylabel('X')
-# ax.set_zlabel('Y')
-
-# ax.set_title('Events')
-
-method = "count"
-
-
-if method == "latest":
-    img = np.zeros((346, 260))
-    img[posi['x'], posi['y']] = 1
-    img[nega['x'], nega['y']] = -1
-
-    plt.imshow(img, cmap
-    ='coolwarm')
-elif method == "ToFrame":
-    transform = tonic.transforms.ToFrame(
-        sensor_size=(346, 260, 2),
-        n_time_bins=1
-    )
-    frames = transform(sample)
-    tonic.utils.plot_animation(frames)
-elif method == "
-
-
-print(img.shape)    
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(sample['t'], sample['x'], sample['y'], c=sample['p'], s=1, cmap='coolwarm')
+ax.set_xlabel('Time (us)')
+ax.set_ylabel('X')
+ax.set_zlabel('Y')
 
 plt.show()
+#%%
+
+frame = tonic.transforms.ToFrame(sensor_size=(346, 260, 2), time_window=30e3)(sample)
+print(frame[0, :, :].shape)
+frame = np.concatenate([np.zeros((1, 260, 346)), frame[0, :, :]], axis=0)
+fig, ax = plt.subplots(1, 1)
+frame = frame.transpose(1,2, 0)
+ax.imshow(frame)
+plt.show()
+# %%
+
+frame_single = np.sum(frame, axis=2)
+fig, ax = plt.subplots(1, 1)
+ax.imshow(frame_single, cmap='gray')
+# %%
+
+
+voxel = tonic.transforms.ToVoxelGrid(sensor_size=(346, 260, 2), n_time_bins=4)(sample)
+print(voxel.shape)
+
+fig, axes = plt.subplots(2, 2, figsize=(5, 5), sharex=True, sharey=True)
+
+for i in range(4):
+    ax = axes.flatten()[i]
+    print(voxel[i, 0 :, :].shape)
+    ax.imshow(voxel[i, 0 :, :][0], cmap='gray')
+    ax.set_title(f"Time bin {i+1}")
+
+
+
+# %%

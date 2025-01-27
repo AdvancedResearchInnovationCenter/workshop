@@ -1,0 +1,9 @@
+matplotlib
+numpy
+tonic
+h5py
+pyyaml
+pycryptodomex
+python-gnupg
+rospkg
+ipython

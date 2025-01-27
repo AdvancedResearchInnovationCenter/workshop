@@ -9,6 +9,7 @@ In the `install/` directory you will find scripts to install all the software yo
 1. `install/ros.sh` will install ros noetic
 2. `install/rpg.sh` will install the required ROS drivers for the cameras we will be using (built without catkin_simple)
 3. `install/ros_robot.sh` will install ros_robot package
+4. run `pip install -r requirements.txt` to install python dependencies
 
 This tutorial will work the the system's default python installtion. For advanced use later on, you can pick and choose your python environment accordingly by adjusting the scripts above.
 
