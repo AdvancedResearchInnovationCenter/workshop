@@ -40,30 +40,43 @@ sample = events[breaks_idx[120]:breaks_idx[121]]
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(sample['t'], sample['x'], sample['y'], c=sample['p'], s=1, cmap='coolwarm')
+plt.title('Event cloud')
 ax.set_xlabel('Time (us)')
 ax.set_ylabel('X')
 ax.set_zlabel('Y')
 
-plt.show()
 #%%
 
-frame = tonic.transforms.ToFrame(sensor_size=(346, 260, 2), time_window=30e3)(sample)
-print(frame[0, :, :].shape)
-frame = np.concatenate([np.zeros((1, 260, 346)), frame[0, :, :]], axis=0)
-fig, ax = plt.subplots(1, 1)
-frame = frame.transpose(1,2, 0)
-ax.imshow(frame)
-plt.show()
-# %%
+# frame = tonic.transforms.ToFrame(sensor_size=(346, 260, 2), time_window=30e3)(sample)
+frame = np.zeros((260, 346))
 
-frame_single = np.sum(frame, axis=2)
+for e in sample:
+    frame[e['y'], e['x']] += 1
+
+# print(frame[0, :, :].shape)
+# frame = np.concatenate([np.zeros((1, 260, 346)), frame[0, :, :]], axis=0)
 fig, ax = plt.subplots(1, 1)
-ax.imshow(frame_single, cmap='gray')
+ax.imshow(frame, cmap='gray')
+plt.title('Histogram of events')
+# %%
+frame = np.zeros((2, 260, 346))
+
+for e in sample:
+    frame[e['p']*1, e['y'], e['x']] += 1
+
+print(frame.shape)
+
+frame = np.concatenate([np.zeros((1, 260, 346)), frame[:, :, :]], axis=0)
+frame = np.transpose(frame, (1, 2, 0))
+print(frame.shape)
+fig, ax = plt.subplots(1, 1)
+
+ax.imshow(frame, cmap='gray')
+plt.title('Histogram of events by polarity')
 # %%
 
 
 voxel = tonic.transforms.ToVoxelGrid(sensor_size=(346, 260, 2), n_time_bins=4)(sample)
-print(voxel.shape)
 
 fig, axes = plt.subplots(2, 2, figsize=(5, 5), sharex=True, sharey=True)
 
@@ -73,6 +86,36 @@ for i in range(4):
     ax.imshow(voxel[i, 0 :, :][0], cmap='gray')
     ax.set_title(f"Time bin {i+1}")
 
-
+plt.title('Voxel grid')
 
 # %%
+timesurface = np.zeros((260, 346))
+# t_norm = (sample['t'] - sample['t'][0]) / (sample['t'][-1] - sample['t'][0])
+tau = 0.02e6
+t_ref = sample['t'][-1]
+for i, e in enumerate(sample):
+    timesurface[e['y'], e['x']] = np.exp((e['t'] - t_ref) / tau)
+
+print(timesurface)
+
+fig, ax = plt.subplots(1, 1)
+ax.imshow(timesurface, cmap='gray')
+plt.title('Time surface')
+
+# %%
+avg_timestamp = np.zeros((260, 346))
+t_norm = (sample['t'] - sample['t'][0]) / (sample['t'][-1] - sample['t'][0])
+counts = np.zeros((260, 346))
+for i, e in enumerate(sample):
+    avg_timestamp[e['y'], e['x']] += t_norm[i]
+    counts[e['y'], e['x']] += 1
+
+avg_timestamp = np.divide(avg_timestamp, counts, out=np.zeros_like(avg_timestamp), where=counts!=0)
+
+fig, ax = plt.subplots(1, 1)
+
+ax.imshow(avg_timestamp, cmap='gray')
+plt.title('Average timestamp')
+
+# %%
+plt.show()
