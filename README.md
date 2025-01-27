@@ -13,4 +13,6 @@ In the `install/` directory you will find scripts to install all the software yo
 
 This tutorial will work the the system's default python installtion. For advanced use later on, you can pick and choose your python environment accordingly by adjusting the scripts above.
 
+For day1 continue with `day1/day1_ws.ipynb`.
+
 The above installtion will create a catkin workspace in your home directory called `rpg_ws`. 
